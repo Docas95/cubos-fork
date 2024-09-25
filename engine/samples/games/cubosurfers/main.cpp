@@ -57,11 +57,17 @@ int main()
         });
 
     cubos.system("detect player vs obstacle collisions")
-        .call([](Query<const Player&, const CollidingWith&, const Obstacle&> collisions) {
+        .call([](Commands cmds, const Assets& assets, Query<Entity> all, Query<const Player&, const CollidingWith&, const Obstacle&> collisions) {
             for (auto [player, collidingWith, obstacle] : collisions)
             {
                 CUBOS_INFO("Player collided with an obstacle!");
-                (void)player; // here to shut up 'unused variable warning', you can remove it
+                // Destroy all entities
+                for (auto [ent] : all)
+                {
+                    cmds.destroy(ent);
+                }
+                // Respawn all entities
+                cmds.spawn(assets.read(SceneAsset)->blueprint);
             }
         });
 
