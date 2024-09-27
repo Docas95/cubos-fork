@@ -8,6 +8,8 @@
 #include <cubos/engine/settings/plugin.hpp>
 #include <cubos/engine/voxels/plugin.hpp>
 
+#include <iostream>
+
 #include "obstacle.hpp"
 #include "player.hpp"
 #include "spawner.hpp"
@@ -68,6 +70,23 @@ int main()
                 }
                 // Respawn all entities
                 cmds.spawn(assets.read(SceneAsset)->blueprint);
+            }
+        });
+
+    cubos.observer("progressively make game faster")
+        .onAdd<Obstacle>()
+        .call([](Query<Obstacle&> obstacles, Query<Spawner&> spawners) {
+            // Increase speed at which obstacles are created
+            int spawned = 1;
+            for (auto [spawner] : spawners)
+            {
+                spawned = spawner.entitiesSpawned;
+                if(spawner.period > 0.20f) spawner.period -= 0.005f;
+            }
+            // Increase obstacle speed
+            for (auto [obstacle] : obstacles)
+            {
+                obstacle.velocity.z = - spawned * 0.5f - 100.0f;
             }
         });
 

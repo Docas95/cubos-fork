@@ -32,6 +32,7 @@ void spawnerPlugin(cubos::engine::Cubos& cubos)
             for (auto [spawner, position] : spawners)
             {
                 spawner.accumulator += dt.value();
+                
                 if (spawner.accumulator >= spawner.period)
                 {
                     spawner.accumulator -= spawner.period;
@@ -41,6 +42,8 @@ void spawnerPlugin(cubos::engine::Cubos& cubos)
                     spawnPosition.vec.x += static_cast<float>(offset) * spawner.laneWidth;
 
                     commands.spawn(assets.read(spawner.scene)->blueprint).add(spawner.sceneRoot, spawnPosition);
+
+                    spawner.entitiesSpawned++;
                 }
             }
         });

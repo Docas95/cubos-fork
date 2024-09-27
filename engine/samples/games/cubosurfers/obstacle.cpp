@@ -26,7 +26,7 @@ void obstaclePlugin(cubos::engine::Cubos& cubos)
     cubos.component<Obstacle>();
 
     cubos.system("move obstacles")
-        .call([](Commands cmds, const DeltaTime& dt, Query<Entity, const Obstacle&, Position&> obstacles) {
+        .call([](Commands cmds, const DeltaTime& dt, Query<Entity, Obstacle&, Position&> obstacles) {
             for (auto [ent, obstacle, position] : obstacles)
             {
                 position.vec += obstacle.velocity * dt.value();
