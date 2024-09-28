@@ -8,11 +8,10 @@
 #include <cubos/engine/settings/plugin.hpp>
 #include <cubos/engine/voxels/plugin.hpp>
 
-#include <iostream>
-
 #include "obstacle.hpp"
 #include "player.hpp"
 #include "spawner.hpp"
+#include "powerup.hpp"
 
 using namespace cubos::engine;
 
@@ -28,6 +27,7 @@ int main()
     cubos.plugin(spawnerPlugin);
     cubos.plugin(obstaclePlugin);
     cubos.plugin(playerPlugin);
+    cubos.plugin(powerUpPlugin);
 
     cubos.startupSystem("configure settings").tagged(settingsTag).call([](Settings& settings) {
         settings.setString("assets.io.path", SAMPLE_ASSETS_FOLDER);
@@ -59,10 +59,19 @@ int main()
         });
 
     cubos.system("detect player vs obstacle collisions")
-        .call([](Commands cmds, const Assets& assets, Query<Entity> all, Query<const Player&, const CollidingWith&, const Obstacle&> collisions) {
-            for (auto [player, collidingWith, obstacle] : collisions)
+        .call([](Commands cmds, const Assets& assets, Query<Entity> all, Query<Player&, const CollidingWith&, const Obstacle&, Entity> collisions) {
+            for (auto [player, collidingWith, obstacle, ent] : collisions)
             {
                 CUBOS_INFO("Player collided with an obstacle!");
+                
+                if (player.shield)
+                {
+                    CUBOS_INFO("Shield destroyed!");
+                    player.shield = 0;
+                    cmds.destroy(ent);
+                    break;
+                }
+
                 // Destroy all entities
                 for (auto [ent] : all)
                 {
@@ -73,22 +82,45 @@ int main()
             }
         });
 
-    cubos.observer("progressively make game faster")
-        .onAdd<Obstacle>()
-        .call([](Query<Obstacle&> obstacles, Query<Spawner&> spawners) {
-            // Increase speed at which obstacles are created
-            int spawned = 1;
-            for (auto [spawner] : spawners)
+    cubos.system("detect player vs powerups collisions")
+        .call([](Commands cmds, Query<Player&, const CollidingWith&, const PowerUp&, Entity> collisions) {
+            for (auto [player, collidingWith, powerup, ent] : collisions)
             {
-                spawned = spawner.entitiesSpawned;
-                if(spawner.period > 0.20f) spawner.period -= 0.005f;
-            }
-            // Increase obstacle speed
-            for (auto [obstacle] : obstacles)
-            {
-                obstacle.velocity.z = - spawned * 0.5f - 100.0f;
+                CUBOS_INFO("Player collided with a powerup");
+
+                if (powerup.type == "shield")
+                {
+                    CUBOS_INFO("Shield received");
+                    player.shield = 1;
+                }
+                else if (powerup.type == "jetpack")
+                {
+                    CUBOS_INFO("Jetpack received");
+                    player.jetpack = 1;
+                }
+
+                cmds.destroy(ent);
             }
         });
 
+    cubos.system("speed up obstacles and powerups")
+        .call([](Query<Obstacle&> obstacles, Query<PowerUp&> powerups, Query<const Spawner&> spawners) {
+            float spawned = 0;    
+            for (auto [spawner] : spawners)
+            {
+                spawned = (float) spawner.entitiesSpawned;
+            }
+
+            for (auto [obstacle] : obstacles)
+            {
+                obstacle.velocity.z = -100.0f - spawned * 10.0f;
+            }
+
+            for (auto [powerup] : powerups)
+            {
+                powerup.velocity.z = -100.0f - spawned * 10.0f;
+            }
+        });
+    
     cubos.run();
 }

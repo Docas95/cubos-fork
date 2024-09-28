@@ -44,6 +44,7 @@ void spawnerPlugin(cubos::engine::Cubos& cubos)
                     commands.spawn(assets.read(spawner.scene)->blueprint).add(spawner.sceneRoot, spawnPosition);
 
                     spawner.entitiesSpawned++;
+                    if (spawner.period > 0.30f) spawner.period -= 0.01f;
                 }
             }
         });

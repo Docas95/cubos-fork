@@ -54,6 +54,17 @@ void playerPlugin(cubos::engine::Cubos& cubos)
             {
                 position.vec.y = 0;
             }
+
+            if (player.jetpack)
+            {
+                position.vec.y = 15;
+                player.flightTiming += dt.value();
+                if (player.flightTiming >= player.flightPeriod)
+                {
+                    player.flightTiming = 0;
+                    player.jetpack = 0;
+                }
+            }
         }
     });
 }

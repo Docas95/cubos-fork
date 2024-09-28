@@ -21,7 +21,7 @@ macro(make_sample)
   endforeach()
 
   # Add the sample target
-  add_executable(${target} ${sources})
+  add_executable(${target} ${sources} "games/cubosurfers/powerup.cpp" "games/cubosurfers/powerup.hpp")
   target_link_libraries(${target} cubos-engine)
   cubos_common_target_options(${target})
 
